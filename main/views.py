@@ -95,13 +95,10 @@ def index(request):
             path = full_path_from_hash(sha1)
             try:
                 os.makedirs(path)
-                print "made directories"
             except Exception, e:
-                print str(e)
-            print tmpfile.name
-            print path
+                pass
             shutil.move(tmpfile.name,os.path.join(path,"image" + extension))
-            return HttpResponseRedirect("/image/%s/" % sha1)
+            return HttpResponseRedirect("/image/%s/full/image%s" % (sha1,extension))
         else:
             return HttpResponse("no image uploaded")
     else:
