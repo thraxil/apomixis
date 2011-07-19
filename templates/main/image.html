@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+the image
+<tt>{{path}}</tt>
+
+<ul>
+{% for file in files %}
+<li><a href="{{path}}/{{file}}"><img src="{{path}}/{{file}}"/></a></li>
+{% endfor %}
+</ul>
+
+{% endblock %}

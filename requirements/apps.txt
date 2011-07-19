@@ -1,0 +1,4 @@
+-r libs.txt
+requirements/src/sorl-sorl-thumbnail-v10.12.1-33-gd2d58a4.tar.gz
+requirements/src/django-staticmedia-0.2.tar.gz
+
