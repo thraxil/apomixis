@@ -54,6 +54,7 @@ INSTALLED_APPS = (
     'main',
 )
 
+FILE_UPLOAD_PERMISSIONS = 0644
 THUMBNAIL_SUBDIR = "thumbs"
 EMAIL_SUBJECT_PREFIX = "[apomixis] "
 EMAIL_HOST = 'localhost'

@@ -98,6 +98,8 @@ def index(request):
             except Exception, e:
                 pass
             shutil.move(tmpfile.name,os.path.join(path,"image" + extension))
+            if settings.FILE_UPLOAD_PERMISSIONS is not None:
+                os.chmod(os.path.join(path,"image" + extension), settings.FILE_UPLOAD_PERMISSIONS)
             return HttpResponseRedirect("/image/%s/full/image%s" % (sha1,extension))
         else:
             return HttpResponse("no image uploaded")
@@ -160,6 +162,9 @@ def image(request,sha,size,basename,ext):
         im = Image.open(os.path.join(dirpath,full_filename))
         im = resize(im,width,height,square)
         im.save(os.path.join(dirpath,filename))
+        if settings.FILE_UPLOAD_PERMISSIONS is not None:
+            os.chmod(os.path.join(dirpath,filename), settings.FILE_UPLOAD_PERMISSIONS)
+
         if USE_XSENDFILE:
             response = HttpResponse()
             response['X-Sendfile'] = os.path.join(dirpath,filename)
