@@ -141,13 +141,14 @@ def image(request,sha,size,basename,ext):
         square = False
         # otherwise, we need to create it first
         # parse file size spec
+        height = None
+        width = None
+
         if size.endswith("s"):
             # crop to square
             width = int(size[:-1])
             square = True
         else:
-            height = None
-            width = None
             # get width and/or height
             m = re.search('(\d+)w', size)
             if m:
