@@ -13,6 +13,7 @@ STATICMEDIA_MOUNTS = (
 
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
+USE_XSENDFILE = True
 
 try:
     from local_settings import *
