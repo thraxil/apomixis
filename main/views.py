@@ -109,7 +109,6 @@ def image(request,sha,size,basename,ext):
     ext = ext.lower()
     if ext == "jpeg":
         ext = "jpg"
-    path = url_from_hash(sha)
     dirpath = full_path_from_hash(sha)
     existing_files = os.listdir(dirpath)
     full_filename = "image.%s" % ext
