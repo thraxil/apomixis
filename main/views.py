@@ -42,13 +42,6 @@ def resize(img,width=None,height=None,square=False):
         
     return img
 
-mapping = {'image/jpeg' : 'JPEG',
-           'image/gif' : 'GIF',
-           'image/png' : 'PNG'}
-
-def get_format_from_content_type(ct):
-    return mapping.get(ct,'JPEG')
-
 class rendered_with(object):
     def __init__(self, template_name):
         self.template_name = template_name
