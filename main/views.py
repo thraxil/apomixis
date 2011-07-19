@@ -126,7 +126,7 @@ def image(request,sha,size,basename,ext):
         # and 301 redirect to correct extension if required
     else:
         filename = "%s.%s" % (size,ext)
-    try:
+    if os.path.exists(os.path.join(dirpath,filename)):
         # if that file exists already, we can just serve it
         # TODO: normalize size filenames. eg,
         #       100w100h == 100h100w
@@ -139,7 +139,7 @@ def image(request,sha,size,basename,ext):
             return response
         else:
             data = open(os.path.join(dirpath,filename)).read()
-    except:
+    else:
         square = False
         # otherwise, we need to create it first
         # parse file size spec
