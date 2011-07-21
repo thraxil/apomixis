@@ -115,13 +115,24 @@ def normalize_size_format(size):
         # nothing to normalize
         return size
 
+def serve_file(filename,ext):
+    USE_XSENDFILE = getattr(settings, 'USE_XSENDFILE', False)
+    if USE_XSENDFILE:
+        response = HttpResponse()
+        response['X-Sendfile'] = filename
+        response['Content-Type'] = ''
+        return response
+    else:
+        data = open(filename).read()
+        mimes = dict(jpg="image/jpeg",gif="image/gif",png="image/png")
+        return HttpResponse(data,mimes[ext])
+
 def image(request,sha,size,basename,ext):
     # TODO: handle etags
     # TODO: handle if-modified-since headers
     # TODO: send image dimensions in headers
     # TODO: detect noop resizes and 301 to existing ones
     #       instead of creating duplicate files
-    USE_XSENDFILE = getattr(settings, 'USE_XSENDFILE', False)
     ext = ext.lower()
     if ext == "jpeg":
         ext = "jpg"
@@ -134,15 +145,7 @@ def image(request,sha,size,basename,ext):
         filename = "%s.%s" % (size,ext)
     if os.path.exists(os.path.join(dirpath,filename)):
         # if that file exists already, we can just serve it
-        if USE_XSENDFILE:
-            response = HttpResponse()
-            response['X-Sendfile'] = os.path.join(dirpath,filename)
-            # Unset the Content-Type as to allow for the webserver
-            # to determine it.
-            response['Content-Type'] = ''
-            return response
-        else:
-            data = open(os.path.join(dirpath,filename)).read()
+        return serve_file(os.path.join(dirpath,filename),ext)
     else:
         # it doesn't exist. let's first check to see if it exists with a 
         # different extension though and redirect to that
@@ -177,14 +180,5 @@ def image(request,sha,size,basename,ext):
         if settings.FILE_UPLOAD_PERMISSIONS is not None:
             os.chmod(os.path.join(dirpath,filename), settings.FILE_UPLOAD_PERMISSIONS)
 
-        if USE_XSENDFILE:
-            response = HttpResponse()
-            response['X-Sendfile'] = os.path.join(dirpath,filename)
-            # Unset the Content-Type as to allow for the webserver
-            # to determine it.
-            response['Content-Type'] = ''
-            return response
-        else:
-            data = open(os.path.join(dirpath,filename)).read()
-    mimes = dict(jpg="image/jpeg",gif="image/gif",png="image/png")
-    return HttpResponse(data,mimes[ext])
+        return serve_file(os.path.join(dirpath,filename),ext)
+
