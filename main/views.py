@@ -100,6 +100,21 @@ def index(request):
     else:
         return dict()
 
+def normalize_size_format(size):
+    """ always go width first. ie, 100h100w gets converted to 100w100h """
+    if "h" in size and "w" in size:
+        width, height = 0,0
+        m = re.search('(\d+)w', size)
+        if m:
+            width = int(m.groups(0)[0])
+        m = re.search('(\d+)h', size)
+        if m:
+            height = int(m.groups(0)[0])
+        return "%dw%dh" % (width,height)
+    else:
+        # nothing to normalize
+        return size
+
 def image(request,sha,size,basename,ext):
     # TODO: handle etags
     # TODO: handle if-modified-since headers
@@ -111,16 +126,14 @@ def image(request,sha,size,basename,ext):
     if ext == "jpeg":
         ext = "jpg"
     dirpath = full_path_from_hash(sha)
-    existing_files = os.listdir(dirpath)
     full_filename = "image.%s" % ext
     if size == "full":
         filename = full_filename
     else:
+        size = normalize_size_format(size)
         filename = "%s.%s" % (size,ext)
     if os.path.exists(os.path.join(dirpath,filename)):
         # if that file exists already, we can just serve it
-        # TODO: normalize size filenames. eg,
-        #       100w100h == 100h100w
         if USE_XSENDFILE:
             response = HttpResponse()
             response['X-Sendfile'] = os.path.join(dirpath,filename)
