@@ -1,6 +1,7 @@
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseNotFound
+from django.http import HttpResponsePermanentRedirect
 import hmac, hashlib
 from django.conf import settings
 import tempfile
@@ -114,8 +115,6 @@ def image(request,sha,size,basename,ext):
     full_filename = "image.%s" % ext
     if size == "full":
         filename = full_filename
-        # TODO: check directory for image.ext
-        # and 301 redirect to correct extension if required
     else:
         filename = "%s.%s" % (size,ext)
     if os.path.exists(os.path.join(dirpath,filename)):
@@ -132,6 +131,14 @@ def image(request,sha,size,basename,ext):
         else:
             data = open(os.path.join(dirpath,filename)).read()
     else:
+        # it doesn't exist. let's first check to see if it exists with a 
+        # different extension though and redirect to that
+        for test_ext in ["jpg","gif","png"]:
+            test_filename = "%s.%s" % (size,test_ext)
+            if os.path.exists(os.path.join(dirpath,test_filename)):
+                # aha! this file exists, just with a different extension
+                # redirect them to that one instead
+                return HttpResponsePermanentRedirect("/image/%s/%s/image.%s" % (sha,size,test_ext))
         square = False
         # otherwise, we need to create it first
         # parse file size spec
