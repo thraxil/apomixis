@@ -9,6 +9,7 @@ import os.path
 import shutil
 import re
 import Image, cStringIO
+import simplejson
 
 def square_resize(img,size):
     sizes = list(img.size)
@@ -91,10 +92,16 @@ def index(request):
                 os.makedirs(path)
             except Exception, e:
                 pass
+            # OPTIMIZE: if target file already exists (duplicate upload)
+            #           no need to copy the file over it
             shutil.move(tmpfile.name,os.path.join(path,"image" + extension))
             if settings.FILE_UPLOAD_PERMISSIONS is not None:
                 os.chmod(os.path.join(path,"image" + extension), settings.FILE_UPLOAD_PERMISSIONS)
-            return HttpResponseRedirect("/image/%s/full/image%s" % (sha1,extension))
+
+            data = dict(hash=sha1,extension=extension,
+                        full_url="/image/%s/full/image%s" % (sha1,extension))
+
+            return HttpResponse(simplejson.dumps(data),mimetype="application/json")
         else:
             return HttpResponse("no image uploaded")
     else:
