@@ -9,7 +9,7 @@ ADMINS = ( )
 MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'sqlite3' 
-DATABASE_NAME = ':memory:' 
+DATABASE_NAME = 'apomixis.sqlite' 
 DATABASE_USER = ''         
 DATABASE_PASSWORD = ''     
 DATABASE_HOST = ''         
@@ -54,3 +54,15 @@ SERVER_EMAIL = "apomixis@ccnmtl.columbia.edu"
 
 UPLOAD_KEYS = None
 
+CLUSTER = {
+    'name' : 'testcluster', # name of the cluster
+    'uuid' : 'fillmein', # my UUID (randomly generated)
+    'secret' : 'this is secret stuffs', # shared secret for the cluster
+    'location' : 'butler', # my location
+    'nodes' : ['http://localhost:8001/'], # other nodes in the cluster
+    'nickname' : 'behemoth1', # my nickname in the cluster
+    'replication' : 3, # how many copies of each image it will try to maintain
+    'location_replication' : 1, # how many locations it will try to spread those copies over
+    'writeable' : True, # i can handle uploads
+    'announce_frequency' : 300, # how often to re-announce self to the cluster (seconds)
+    }

@@ -10,6 +10,7 @@ import shutil
 import re
 import Image, cStringIO
 import simplejson
+from models import Node, current_neighbors
 
 def square_resize(img,size):
     sizes = list(img.size)
@@ -68,6 +69,51 @@ def full_path_from_hash(sha1):
 
 def url_from_hash(sha1):
     return os.path.join(settings.MEDIA_URL, "data", path_from_hash(sha1))
+
+def announce(request):
+    """ all purpose announce/gossip url. 
+    returns info about itself and about the other nodes it knows in the cluster
+    can be passed info about the node calling """
+    # TODO: authenticate
+
+    n = dict()
+    if request.method == 'GET':
+        n = request.GET
+    else:
+        n = request.POST
+    if 'json' in n.keys():
+        # let them just pass it in as a json dict
+        # TODO: allow POST body as json (look at content-type)
+        n = simplejson.loads(n['json'])
+
+    if 'uuid' in n.keys():
+        # neighbor is announcing to us, let's listen to what they have to say
+        nuuid = n['uuid']
+        r = Node.objects.filter(uuid=nuuid)
+        if r.count():
+            # we've met this neighbor before. just update.
+            neighbor = r[0]
+        else:
+            # hello new neighbor!
+            neighbor = Node.objects.create(uuid=nuuid,
+                                           nickname=n['nickname'],
+                                           base_url=n['base_url'],
+                                           location=n['location'],
+                                           writeable=n['writeable'],
+                                           )
+
+    # be polite and respond with data about myself
+    data = {
+        'nickname' : settings.CLUSTER['nickname'], 
+        'uuid' : settings.CLUSTER['uuid'], 
+        'location' : settings.CLUSTER['location'],
+        'nodes' : [n.as_dict() for n in current_neighbors()], 
+        # TODO: determine based on storage caps
+        'writeable' : settings.CLUSTER['writeable'], 
+        'base_url' : "http://localhost:8000/", #TODO: fix
+        }
+    return HttpResponse(simplejson.dumps(data),mimetype="application/json")
+    
 
 @rendered_with("main/index.html")
 def index(request):
