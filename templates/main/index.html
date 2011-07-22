@@ -2,6 +2,10 @@
 {% block content %}
 <form action="." method="post" enctype="multipart/form-encode">
 <input type="file" name="image" />
+{% if upload_key_required %}
+<p>this site requires an upload key: <input type="text"
+					    name="upload_key" /></p>
+{% endif %}
 <input type="submit" value="upload" />
 </form>
 {% endblock %}

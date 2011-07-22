@@ -71,7 +71,12 @@ def url_from_hash(sha1):
 
 @rendered_with("main/index.html")
 def index(request):
+    upload_key_required = settings.UPLOAD_KEYS is not None
     if request.method == "POST":
+        if upload_key_required:
+            upload_key = request.POST.get("upload_key","")
+            if upload_key not in settings.UPLOAD_KEYS:
+                return HttpResponse("missing/wrong upload key")
         if request.FILES.get('image',None):
             original_filename = request.FILES['image'].name
             extension = os.path.splitext(original_filename)[1].lower()
@@ -105,7 +110,7 @@ def index(request):
         else:
             return HttpResponse("no image uploaded")
     else:
-        return dict()
+        return dict(upload_key_required=upload_key_required)
 
 def normalize_size_format(size):
     """ always go width first. ie, 100h100w gets converted to 100w100h """
