@@ -102,6 +102,7 @@ def announce(request):
                                            writeable=n['writeable'],
                                            )
 
+    protocol = request.is_secure() and 'https' or 'http'
     # be polite and respond with data about myself
     data = {
         'nickname' : settings.CLUSTER['nickname'], 
@@ -110,7 +111,7 @@ def announce(request):
         'nodes' : [n.as_dict() for n in current_neighbors()], 
         # TODO: determine based on storage caps
         'writeable' : settings.CLUSTER['writeable'], 
-        'base_url' : "http://localhost:8000/", #TODO: fix
+        'base_url' : "%s://%s/" % (protocol,request.get_host()), 
         }
     return HttpResponse(simplejson.dumps(data),mimetype="application/json")
     
