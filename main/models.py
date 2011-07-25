@@ -1,6 +1,10 @@
 from django.db import models
 from datetime import datetime, timedelta
 
+def normalize_url(url):
+    return url.replace("localhost","127.0.0.1")
+
+
 class Node(models.Model):
     """ what we know about another node in the cluster """
     nickname = models.CharField(max_length=256)
@@ -15,7 +19,7 @@ class Node(models.Model):
         # for gossip/announce
         return {'nickname' : self.nickname,
                 'uuid' : self.uuid,
-                'base_url' : self.base_url,
+                'base_url' : normalize_url(self.base_url),
                 'location' : self.location,
                 'writeable' : self.writeable,
             }

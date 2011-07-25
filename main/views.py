@@ -10,7 +10,7 @@ import shutil
 import re
 import Image, cStringIO
 import simplejson
-from models import Node, current_neighbors
+from models import Node, current_neighbors, normalize_url
 
 def square_resize(img,size):
     sizes = list(img.size)
@@ -97,7 +97,7 @@ def announce(request):
             # hello new neighbor!
             neighbor = Node.objects.create(uuid=nuuid,
                                            nickname=n['nickname'],
-                                           base_url=n['base_url'],
+                                           base_url=normalize_url(n['base_url']),
                                            location=n['location'],
                                            writeable=n['writeable'],
                                            )
@@ -111,7 +111,7 @@ def announce(request):
         'nodes' : [n.as_dict() for n in current_neighbors()], 
         # TODO: determine based on storage caps
         'writeable' : settings.CLUSTER['writeable'], 
-        'base_url' : "%s://%s/" % (protocol,request.get_host()), 
+        'base_url' : normalize_url("%s://%s/" % (protocol,request.get_host())), 
         }
     return HttpResponse(simplejson.dumps(data),mimetype="application/json")
     
