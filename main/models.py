@@ -1,10 +1,6 @@
 from django.db import models
 from datetime import datetime, timedelta
 
-def normalize_url(url):
-    return url.replace("localhost","127.0.0.1")
-
-
 class Node(models.Model):
     """ what we know about another node in the cluster """
     nickname = models.CharField(max_length=256)
@@ -19,7 +15,7 @@ class Node(models.Model):
         # for gossip/announce
         return {'nickname' : self.nickname,
                 'uuid' : self.uuid,
-                'base_url' : normalize_url(self.base_url),
+                'base_url' : self.base_url,
                 'location' : self.location,
                 'writeable' : self.writeable,
             }
@@ -30,8 +26,7 @@ def current_neighbors():
     and haven't had a failure from more recently than we've heard from them """
     now = datetime.now()
     last_hour = now - timedelta(hours=1)
-    all_nodes = Node.objects.filter()
-    return [n for n in all_nodes if not n.last_failed or n.last_seen > n.last_failed]
+    return [n for n in Node.objects.filter(last_seen__gte=last_hour) if n.last_seen > n.last_failed]
     
 def current_writeable_neighbors():    
     """ nodes that we think are alive and are writeable.
