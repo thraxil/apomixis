@@ -11,6 +11,7 @@ import re
 import Image, cStringIO
 import simplejson
 from models import Node, current_neighbors, normalize_url
+from datetime import datetime
 
 def square_resize(img,size):
     sizes = list(img.size)
@@ -94,6 +95,8 @@ def announce(request):
         if r.count():
             # we've met this neighbor before. just update.
             neighbor = r[0]
+            neighbor.last_seen = datetime.now()
+            neighbor.save()
         else:
             # hello new neighbor!
             neighbor = Node.objects.create(uuid=nuuid,
