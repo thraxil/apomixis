@@ -15,7 +15,7 @@ class Node(models.Model):
         # for gossip/announce
         return {'nickname' : self.nickname,
                 'uuid' : self.uuid,
-                'base_url' : self.base_url,
+                'base_url' : normalize_url(self.base_url),
                 'location' : self.location,
                 'writeable' : self.writeable,
             }
@@ -26,7 +26,8 @@ def current_neighbors():
     and haven't had a failure from more recently than we've heard from them """
     now = datetime.now()
     last_hour = now - timedelta(hours=1)
-    return [n for n in Node.objects.filter(last_seen__gte=last_hour) if n.last_seen > n.last_failed]
+    all_nodes = Node.objects.filter()
+    return [n for n in all_nodes if n.last_seen > n.last_failed]
     
 def current_writeable_neighbors():    
     """ nodes that we think are alive and are writeable.
@@ -36,3 +37,5 @@ def current_writeable_neighbors():
     last_hour = now - timedelta(hours=1)
     return [n for n in Node.objects.filter(last_seen__gte=last_hour,writeable=True) if n.last_seen > n.last_failed]
 
+def normalize_url(url):
+    return url.replace("localhost","127.0.0.1")

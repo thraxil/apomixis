@@ -10,7 +10,7 @@ import shutil
 import re
 import Image, cStringIO
 import simplejson
-from models import Node, current_neighbors
+from models import Node, current_neighbors, normalize_url
 
 def square_resize(img,size):
     sizes = list(img.size)
@@ -70,6 +70,7 @@ def full_path_from_hash(sha1):
 def url_from_hash(sha1):
     return os.path.join(settings.MEDIA_URL, "data", path_from_hash(sha1))
 
+
 def announce(request):
     """ all purpose announce/gossip url. 
     returns info about itself and about the other nodes it knows in the cluster
@@ -103,6 +104,7 @@ def announce(request):
                                            )
 
     # be polite and respond with data about myself
+    protocol = request.is_secure() and "https" or "http"
     data = {
         'nickname' : settings.CLUSTER['nickname'], 
         'uuid' : settings.CLUSTER['uuid'], 
@@ -110,7 +112,7 @@ def announce(request):
         'nodes' : [n.as_dict() for n in current_neighbors()], 
         # TODO: determine based on storage caps
         'writeable' : settings.CLUSTER['writeable'], 
-        'base_url' : "http://localhost:8000/", #TODO: fix
+        'base_url' : normalize_url("%s://%s/" % (protocol,request.get_host())),
         }
     return HttpResponse(simplejson.dumps(data),mimetype="application/json")
     
