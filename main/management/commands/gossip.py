@@ -3,6 +3,7 @@ from main.models import *
 from django.conf import settings
 from simplejson import loads
 from restclient import GET,POST
+from datetime import datetime
 
 def normalize_url(url):
     return url.replace("localhost","127.0.0.1")
@@ -60,6 +61,8 @@ class Command(BaseCommand):
             node.nickname = n['nickname']
             node.location = n['location']
             node.writeable = n['writeable']
+            node.last_seen = datetime.now()
+            node.save()
             for neighbor in n['nodes']:
                 if normalize_url(neighbor['base_url']) not in base_urls:
                     # they know someone we don't
