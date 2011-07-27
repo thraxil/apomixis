@@ -22,7 +22,13 @@
 <tr><th>writeable</th><td>{{node.writeable}}</td></tr>
 <tr><th>base url</th><td>{{node.base_url}}</td></tr>
 <tr><th>last seen</th><td>{{node.last_seen}}</td></tr>
-<tr><th>last failed</th><td>{{node.last_failed}}</td></tr>
+<tr><th>last failed</th><td
+{% if node.is_current %}
+style="background-color: #66ff66"
+{% else %}
+style="background-color: red"
+{% endif %}
+>{{node.last_failed}}</td></tr>
 </table>
 
 {% endfor %}

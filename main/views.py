@@ -130,7 +130,7 @@ def status(request):
         'nickname' : settings.CLUSTER['nickname'], 
         'uuid' : settings.CLUSTER['uuid'], 
         'location' : settings.CLUSTER['location'],
-        'nodes' : current_neighbors(), 
+        'nodes' : Node.objects.all(),
         # TODO: determine based on storage caps
         'writeable' : settings.CLUSTER['writeable'], 
         'base_url' : normalize_url("%s://%s/" % (protocol,request.get_host())),
