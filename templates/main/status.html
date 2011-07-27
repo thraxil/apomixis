@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>info about this node</h2>
+
+
+<table>
+<tr><th>nickname</th><td>{{nickname}}</td></tr>
+<tr><th>uuid</th><td>{{uuid}}</td></tr>
+<tr><th>location</th><td>{{location}}</td></tr>
+<tr><th>writeable</th><td>{{writeable}}</td></tr>
+<tr><th>base url</th><td>{{base_url}}</td></tr>
+</table>
+
+<h2>Other nodes</h2>
+
+{% for node in nodes %}
+<table>
+<tr><th>nickname</th><td>{{node.nickname}}</td></tr>
+<tr><th>uuid</th><td>{{node.uuid}}</td></tr>
+<tr><th>location</th><td>{{node.location}}</td></tr>
+<tr><th>writeable</th><td>{{node.writeable}}</td></tr>
+<tr><th>base url</th><td>{{node.base_url}}</td></tr>
+<tr><th>last seen</th><td>{{node.last_seen}}</td></tr>
+<tr><th>last failed</th><td>{{node.last_failed}}</td></tr>
+</table>
+
+{% endfor %}
+
+{% endblock %}

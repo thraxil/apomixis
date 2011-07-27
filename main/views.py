@@ -115,6 +115,24 @@ def announce(request):
         'base_url' : normalize_url("%s://%s/" % (protocol,request.get_host())),
         }
     return HttpResponse(simplejson.dumps(data),mimetype="application/json")
+
+@rendered_with("main/status.html")
+def status(request):
+    """ just basic human readable status information 
+    on what the node knows about the cluster """
+    # TODO: authenticate
+
+    protocol = request.is_secure() and "https" or "http"
+    data = {
+        'nickname' : settings.CLUSTER['nickname'], 
+        'uuid' : settings.CLUSTER['uuid'], 
+        'location' : settings.CLUSTER['location'],
+        'nodes' : current_neighbors(), 
+        # TODO: determine based on storage caps
+        'writeable' : settings.CLUSTER['writeable'], 
+        'base_url' : normalize_url("%s://%s/" % (protocol,request.get_host())),
+        }
+    return data
     
 
 @rendered_with("main/index.html")
