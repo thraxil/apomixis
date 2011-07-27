@@ -16,6 +16,7 @@ class Command(BaseCommand):
         # check if the bootstrap nodes from config are already
         # in our database. add them if not.
         for node in settings.CLUSTER['nodes']:
+            node = normalize_url(node)
             r = Node.objects.filter(base_url=node)
             if r.count() == 0:
                 # let's add a Node
@@ -33,6 +34,8 @@ class Command(BaseCommand):
         # compile a list of all the base_urls we know about
         base_urls = [normalize_url(n.base_url) for n in Node.objects.all()]
         base_urls.append(normalize_url(settings.CLUSTER['base_url']))
+
+        print str(base_urls)
 
         # go through the nodes we know about and announce
         # ourself and update our info on them

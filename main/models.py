@@ -27,7 +27,7 @@ def current_neighbors():
     now = datetime.now()
     last_hour = now - timedelta(hours=1)
     all_nodes = Node.objects.filter()
-    return [n for n in all_nodes if n.last_seen > n.last_failed]
+    return [n for n in all_nodes if not n.last_failed or n.last_seen > n.last_failed]
     
 def current_writeable_neighbors():    
     """ nodes that we think are alive and are writeable.
