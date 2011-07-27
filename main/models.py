@@ -22,20 +22,16 @@ class Node(models.Model):
 
 def current_neighbors():
     """ nodes that we think are alive.
-    ie, that we've heard from in the last hour
-    and haven't had a failure from more recently than we've heard from them """
-    now = datetime.now()
-    last_hour = now - timedelta(hours=1)
+    ie, that haven't had a failure from more recently than we've heard from them """
     all_nodes = Node.objects.filter()
     return [n for n in all_nodes if not n.last_failed or n.last_seen > n.last_failed]
     
 def current_writeable_neighbors():    
     """ nodes that we think are alive and are writeable.
-    ie, that we've heard from in the last hour
-    and haven't had a failure from more recently than we've heard from them """
-    now = datetime.now()
-    last_hour = now - timedelta(hours=1)
-    return [n for n in Node.objects.filter(last_seen__gte=last_hour,writeable=True) if n.last_seen > n.last_failed]
+    ie, that haven't had a failure from more recently than 
+    we've heard from them """
+    all_nodes = Node.objects.filter(writeable=True)
+    return [n for n in all_nodes if not n.last_failed or n.last_seen > n.last_failed]
 
 def normalize_url(url):
     return url.replace("localhost","127.0.0.1")
