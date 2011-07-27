@@ -10,6 +10,10 @@
 <tr><th>location</th><td>{{location}}</td></tr>
 <tr><th>writeable</th><td>{{writeable}}</td></tr>
 <tr><th>base url</th><td>{{base_url}}</td></tr>
+<tr><th>hash keys</th><td>
+{% for k in hash_keys %}{{k}} {% endfor %}
+</td>
+</table>
 </table>
 
 <h2>Other nodes</h2>
@@ -29,8 +33,17 @@ style="background-color: #66ff66"
 style="background-color: red"
 {% endif %}
 >{{node.last_failed}}</td></tr>
+<tr><th>hash keys</th><td>
+{% for k in node.hash_keys %}{{k}} {% endfor %}
+</td>
 </table>
 
+{% endfor %}
+
+<h3>ring</h3>
+
+{% for r in ring %}
+{{r.0}}: {{r.1.nickname}}<br />
 {% endfor %}
 
 {% endblock %}

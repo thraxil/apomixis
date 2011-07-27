@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime, timedelta
+from hashlib import sha1
 
 class Node(models.Model):
     """ what we know about another node in the cluster """
@@ -25,6 +26,23 @@ class Node(models.Model):
         if self.last_failed and self.last_seen:
             return self.last_seen > self.last_failed
         return True
+
+    def hash_keys(self,n=128):
+        return hash_keys(self.uuid,n)
+
+def hash_keys(uuid,n=128):
+    keys = []
+    for i in range(n):
+        keys.append(long(sha1("%s%d" % (uuid,i)).hexdigest(), 16))
+    return keys
+
+def ring():
+    r = []
+    for n in current_neighbors():
+        for k in n.hash_keys():
+            r.append((k,n))
+    r.sort(key=lambda x: x[0])
+    return r
 
 def current_neighbors():
     """ nodes that we think are alive.

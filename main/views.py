@@ -10,7 +10,7 @@ import shutil
 import re
 import Image, cStringIO
 import simplejson
-from models import Node, current_neighbors, normalize_url
+from models import Node, current_neighbors, normalize_url, hash_keys, ring
 from datetime import datetime
 
 def square_resize(img,size):
@@ -134,6 +134,8 @@ def status(request):
         # TODO: determine based on storage caps
         'writeable' : settings.CLUSTER['writeable'], 
         'base_url' : normalize_url("%s://%s/" % (protocol,request.get_host())),
+        'hash_keys' : hash_keys(settings.CLUSTER['uuid']),
+        'ring' : ring(),
         }
     return data
     
