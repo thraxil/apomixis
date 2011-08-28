@@ -1,6 +1,9 @@
 from django.db import models
 from datetime import datetime, timedelta
 from hashlib import sha1
+from restclient import POST
+import simplejson
+from django.conf import settings
 
 class Node(models.Model):
     """ what we know about another node in the cluster """
@@ -30,6 +33,47 @@ class Node(models.Model):
     def hash_keys(self,n=128):
         return hash_keys(self.uuid,n)
 
+    def ping(self,base_url):
+        myinfo = settings.CLUSTER
+        myinfo['base_url'] = base_url
+        try:
+            r = POST(self.base_url + "announce/",params=myinfo,async=False)
+            n = simplejson.loads(r)
+            if n['uuid'] == self.uuid:
+                self.last_seen = datetime.now()
+                self.nickname = n['nickname']
+                self.base_url = n['base_url']
+                self.location = n['location']
+                self.writeable = n['writeable']
+                self.save()
+            else:
+                # hello new neighbor!
+                neighbor = Node.objects.create(uuid=nuuid,
+                                               nickname=n['nickname'],
+                                               base_url=n['base_url'],
+                                               location=n['location'],
+                                               writeable=n['writeable'],
+                                               )
+                # let's clear ourself out though.
+                self.delete()
+            # does it know any nodes that we don't?
+            for node in n['nodes']:
+                r = Node.objects.filter(uuid=node['uuid'])
+                if r.count() == 0:
+                    # they know someone we don't
+                    nn = Node.objects.create(uuid=node['uuid'],
+                                             nickname=node['nickname'],
+                                             base_url=node['base_url'],
+                                             location=node['location'],
+                                             writeable=node['writeable'],
+                                             )
+        except Exception, e:
+            self.last_failed = datetime.now()
+            self.writeable = False
+            self.save()
+
+        
+
 def hash_keys(uuid,n=128):
     keys = []
     for i in range(n):
@@ -43,6 +87,15 @@ def ring():
             r.append((k,n))
     r.sort(key=lambda x: x[0])
     return r
+
+def write_ring():
+    r = []
+    for n in current_writeable_neighbors():
+        for k in n.hash_keys():
+            r.append((k,n))
+    r.sort(key=lambda x: x[0])
+    return r
+
 
 def current_neighbors():
     """ nodes that we think are alive.

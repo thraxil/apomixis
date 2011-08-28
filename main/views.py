@@ -167,7 +167,7 @@ def bootstrap(request):
                                                )
         except Exception, e:
             print str(e)
-    return HttpResponse(str(settings.CLUSTER['nodes']))
+    return HttpResponse("done")
 
 @rendered_with("main/index.html")
 def index(request):
