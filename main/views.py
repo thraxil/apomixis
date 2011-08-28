@@ -12,6 +12,7 @@ import Image, cStringIO
 import simplejson
 from models import Node, current_neighbors, normalize_url, hash_keys, ring
 from datetime import datetime
+from restclient import POST
 
 def square_resize(img,size):
     sizes = list(img.size)
@@ -138,7 +139,35 @@ def status(request):
         'ring' : ring(),
         }
     return data
-    
+
+def bootstrap(request):
+    """ announce ourselves to all the nodes in the cluster config to get things started """
+    myinfo = settings.CLUSTER
+    protocol = request.is_secure() and "https" or "http"
+    myinfo['base_url'] = normalize_url("%s://%s/" % (protocol,request.get_host()))
+    for url in settings.CLUSTER['nodes']:
+        try:
+            r = POST(url + "announce/",params=myinfo,async=False)
+            n = simplejson.loads(r)
+            nuuid = n['uuid']
+            r = Node.objects.filter(uuid=nuuid)
+            if r.count():
+                # we've met this neighbor before. just update.
+                neighbor = r[0]
+                neighbor.last_seen = datetime.now()
+                neighbor.save()
+            else:
+                # hello new neighbor!
+                print "adding new neighbor %s" % n['nickname']
+                neighbor = Node.objects.create(uuid=nuuid,
+                                               nickname=n['nickname'],
+                                               base_url=n['base_url'],
+                                               location=n['location'],
+                                               writeable=n['writeable'],
+                                               )
+        except Exception, e:
+            print str(e)
+    return HttpResponse(str(settings.CLUSTER['nodes']))
 
 @rendered_with("main/index.html")
 def index(request):
