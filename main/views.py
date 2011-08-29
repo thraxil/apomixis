@@ -184,23 +184,10 @@ def index(request):
             if extension not in [".jpg",".png",".gif"]:
                 return HttpResponse("unsupported image format")
 
-            tmpfile = tempfile.NamedTemporaryFile(delete=False)
             sha1 = hashlib.sha1()
             for chunk in request.FILES['image'].chunks():
                 sha1.update(chunk)
-                tmpfile.file.write(chunk)
-            tmpfile.file.close()
             sha1 = sha1.hexdigest()
-            path = full_path_from_hash(sha1)
-            try:
-                os.makedirs(path)
-            except Exception, e:
-                pass
-            # OPTIMIZE: if target file already exists (duplicate upload)
-            #           no need to copy the file over it
-            shutil.move(tmpfile.name,os.path.join(path,"image" + extension))
-            if settings.FILE_UPLOAD_PERMISSIONS is not None:
-                os.chmod(os.path.join(path,"image" + extension), settings.FILE_UPLOAD_PERMISSIONS)
 
             data = dict(hash=sha1,extension=extension,
                         full_url="/image/%s/full/image%s" % (sha1,extension))
@@ -208,18 +195,37 @@ def index(request):
             # TODO: this should be a background job
             # distribute out the the cluster
             satisfied = False
-            copies = 1
+            copies = 0
             wr = write_order(long(sha1,16))
+            nodes_written = []
             for node in wr:
                 if copies >= settings.CLUSTER['replication']:
                     satisfied = True
+                    break
                 else:
                     if node.uuid == settings.CLUSTER['uuid']:
-                        # skip ourselves
+                        # we can write directly for our own node
+                        tmpfile = tempfile.NamedTemporaryFile(delete=False)
+                        for chunk in request.FILES['image'].chunks():
+                            tmpfile.file.write(chunk)
+                        tmpfile.file.close()
+                        path = full_path_from_hash(sha1)
+                        try:
+                            os.makedirs(path)
+                        except Exception, e:
+                            pass
+                        # OPTIMIZE: if target file already exists (duplicate upload)
+                        #           no need to copy the file over it
+                        shutil.move(tmpfile.name,os.path.join(path,"image" + extension))
+                        if settings.FILE_UPLOAD_PERMISSIONS is not None:
+                            os.chmod(os.path.join(path,"image" + extension), settings.FILE_UPLOAD_PERMISSIONS)
+                        copies += 1
+                        nodes_written.append(node.uuid)
                         continue
                     r = node.stash(sha1,extension,request.FILES['image'])
                     if r:
                         copies += 1
+                        nodes_written.append(node.uuid)
                     else:
                         # failure to write!
                         # take it off the writeable list for now
@@ -227,6 +233,7 @@ def index(request):
                         node.writeable = False
                         node.save()
             data['satisfied'] = satisfied
+            data['nodes'] = nodes_written
             return HttpResponse(simplejson.dumps(data),mimetype="application/json")
         else:
             return HttpResponse("no image uploaded")
