@@ -15,6 +15,9 @@ class Node(models.Model):
     last_seen = models.DateTimeField(blank=True,null=True)
     last_failed = models.DateTimeField(blank=True,null=True)
 
+    def __unicode__(self):
+        return self.nickname
+    
     def as_dict(self):
         # for gossip/announce
         return {'nickname' : self.nickname,
@@ -72,6 +75,17 @@ class Node(models.Model):
             self.writeable = False
             self.save()
 
+    def stash(self,ahash,extension,image_file):
+        try:
+            r = POST(self.base_url + "stash/",params=dict(hash=ahash,
+                                                          extension=extension),
+                     files={'image' : {'filename' : "image%s" % extension,
+                                       'file' : image_file.file}},
+                     async=False)
+            return True
+        except Exception, e:
+            return False
+
         
 
 def hash_keys(uuid,n=128):
@@ -96,6 +110,26 @@ def write_ring():
     r.sort(key=lambda x: x[0])
     return r
 
+def write_order(image_hash):
+    wr = write_ring()
+    nodes = []
+    appending = False
+    seen = dict()
+    while len(wr) > 0:
+        # get the first element
+        wr.reverse()
+        (k,n) = wr.pop()
+        wr.reverse()
+        # TODO: is there a faster, more idiomatic way to do this in python than reverse, pop, reverse?
+        if appending or image_hash > k:
+            if n.uuid not in seen:
+                nodes.append(n)
+                seen[n.uuid] = True
+            appending = True
+        else:
+            # put it back on
+            wr.append((k,n))
+    return nodes
 
 def current_neighbors():
     """ nodes that we think are alive.

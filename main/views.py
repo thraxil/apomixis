@@ -10,7 +10,7 @@ import shutil
 import re
 import Image, cStringIO
 import simplejson
-from models import Node, current_neighbors, normalize_url, hash_keys, ring
+from models import Node, current_neighbors, normalize_url, hash_keys, ring, write_ring, write_order
 from datetime import datetime
 from restclient import POST
 
@@ -158,7 +158,6 @@ def bootstrap(request):
                 neighbor.save()
             else:
                 # hello new neighbor!
-                print "adding new neighbor %s" % n['nickname']
                 neighbor = Node.objects.create(uuid=nuuid,
                                                nickname=n['nickname'],
                                                base_url=n['base_url'],
@@ -166,7 +165,7 @@ def bootstrap(request):
                                                writeable=n['writeable'],
                                                )
         except Exception, e:
-            print str(e)
+            pass
     return HttpResponse("done")
 
 @rendered_with("main/index.html")
@@ -206,11 +205,54 @@ def index(request):
             data = dict(hash=sha1,extension=extension,
                         full_url="/image/%s/full/image%s" % (sha1,extension))
 
+            # TODO: this should be a background job
+            # distribute out the the cluster
+            satisfied = False
+            copies = 1
+            wr = write_order(long(sha1,16))
+            for node in wr:
+                if copies >= settings.CLUSTER['replication']:
+                    satisfied = True
+                else:
+                    if node.uuid == settings.CLUSTER['uuid']:
+                        # skip ourselves
+                        continue
+                    r = node.stash(sha1,extension,request.FILES['image'])
+                    if r:
+                        copies += 1
+                    else:
+                        # failure to write!
+                        # take it off the writeable list for now
+                        node.last_failed = datetime.now()
+                        node.writeable = False
+                        node.save()
+            data['satisfied'] = satisfied
             return HttpResponse(simplejson.dumps(data),mimetype="application/json")
         else:
             return HttpResponse("no image uploaded")
     else:
         return dict(upload_key_required=upload_key_required)
+
+def stash(request):
+    if request.method == "POST":
+        extension = request.POST['extension']
+        tmpfile = tempfile.NamedTemporaryFile(delete=False)
+        sha1 = request.POST['hash']
+        for chunk in request.FILES['image'].chunks():
+            tmpfile.file.write(chunk)
+        tmpfile.file.close()
+        path = full_path_from_hash(sha1)
+        try:
+            os.makedirs(path)
+        except Exception, e:
+            pass
+        # OPTIMIZE: if target file already exists (duplicate upload)
+        #           no need to copy the file over it
+        shutil.move(tmpfile.name,os.path.join(path,"image" + extension))
+        if settings.FILE_UPLOAD_PERMISSIONS is not None:
+            os.chmod(os.path.join(path,"image" + extension), settings.FILE_UPLOAD_PERMISSIONS)        
+        return HttpResponse("done")
+    return HttpResponse("requires POST")
 
 def normalize_size_format(size):
     """ always go width first. ie, 100h100w gets converted to 100w100h """
