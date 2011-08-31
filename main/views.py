@@ -2,6 +2,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseNotFound
 from django.http import HttpResponsePermanentRedirect
+from django.http import Http404
 import hmac, hashlib
 from django.conf import settings
 import tempfile
@@ -10,9 +11,9 @@ import shutil
 import re
 import Image, cStringIO
 import simplejson
-from models import Node, current_neighbors, normalize_url, hash_keys, ring, write_ring, write_order
+from models import Node, current_neighbors, normalize_url, hash_keys, ring, write_ring, write_order, read_order
 from datetime import datetime
-from restclient import POST
+from restclient import POST,GET
 
 def square_resize(img,size):
     sizes = list(img.size)
@@ -222,7 +223,7 @@ def index(request):
                         copies += 1
                         nodes_written.append(node.uuid)
                         continue
-                    r = node.stash(sha1,extension,request.FILES['image'])
+                    r = node.stash(sha1,extension,request.FILES['image'].read())
                     if r:
                         copies += 1
                         nodes_written.append(node.uuid)
@@ -261,6 +262,56 @@ def stash(request):
         return HttpResponse("done")
     return HttpResponse("requires POST")
 
+def retrieve(request,sha,size,ext="jpg"):
+    full_filename = "image.%s" % ext
+    if size == "full":
+        filename = full_filename
+    else:
+        size = normalize_size_format(size)
+        filename = "%s.%s" % (size,ext)
+    dirpath = full_path_from_hash(sha)
+    if not os.path.exists(dirpath):
+        # not on this node
+        raise Http404
+    if os.path.exists(os.path.join(dirpath,filename)):
+        # if that file exists already, we can just serve it
+        return serve_file(os.path.join(dirpath,filename),ext)
+    # it doesn't exist. let's first check to see if it exists with a 
+    # different extension though and redirect to that
+    for test_ext in ["jpg","gif","png"]:
+        test_filename = "%s.%s" % (size,test_ext)
+        if os.path.exists(os.path.join(dirpath,test_filename)):
+            # aha! this file exists, just with a different extension
+            # redirect them to that one instead
+            return HttpResponsePermanentRedirect("/retrieve/%s/%s/%s/" % (sha,size,test_ext))
+    square = False
+    # otherwise, we need to create it first
+    # parse file size spec
+    height = None
+    width = None
+
+    if size.endswith("s"):
+        # crop to square
+        width = int(size[:-1])
+        square = True
+    else:
+        # get width and/or height
+        m = re.search('(\d+)w', size)
+        if m:
+            width = int(m.groups(0)[0])
+        m = re.search('(\d+)h', size)
+        if m:
+            height = int(m.groups(0)[0])
+
+    im = Image.open(os.path.join(dirpath,full_filename))
+    im = resize(im,width,height,square)
+    im.save(os.path.join(dirpath,filename))
+    if settings.FILE_UPLOAD_PERMISSIONS is not None:
+        os.chmod(os.path.join(dirpath,filename), settings.FILE_UPLOAD_PERMISSIONS)
+
+    return serve_file(os.path.join(dirpath,filename),ext)
+
+
 def normalize_size_format(size):
     """ always go width first. ie, 100h100w gets converted to 100w100h """
     if "h" in size and "w" in size:
@@ -294,6 +345,7 @@ def image(request,sha,size,basename,ext):
     # TODO: send image dimensions in headers
     # TODO: detect noop resizes and 301 to existing ones
     #       instead of creating duplicate files
+    print "image"
     ext = ext.lower()
     if ext == "jpeg":
         ext = "jpg"
@@ -304,7 +356,31 @@ def image(request,sha,size,basename,ext):
     else:
         size = normalize_size_format(size)
         filename = "%s.%s" % (size,ext)
+    if not os.path.exists(dirpath):
+        print "not on this node"
+        # we don't have it on this node, let's check the ring
+        r = read_order(long(sha,16))
+        for node in r:
+            print "checking with node %s" % node.uuid
+            if node.uuid == settings.CLUSTER['uuid']:
+                # we already know that we don't have it
+                continue
+            try:
+                resp,data = GET(node.base_url + "retrieve/%s/%s/%s/" % (sha,size,ext),resp=True)
+                print resp['status']
+                if resp['status'] == '200':
+                    mimes = dict(jpg="image/jpeg",gif="image/gif",png="image/png")
+                    return HttpResponse(data,mimes[ext])
+            except Exception, e:
+                print str(e)
+        # we don't have it and none of the nodes in the ring have it...
+        raise Http404
+    else:
+        print "on this node"
     if os.path.exists(os.path.join(dirpath,filename)):
+        print "found it"
+        print dirpath
+        print filename
         # if that file exists already, we can just serve it
         return serve_file(os.path.join(dirpath,filename),ext)
     else:

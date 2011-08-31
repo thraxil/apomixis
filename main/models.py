@@ -131,6 +131,28 @@ def write_order(image_hash):
             wr.append((k,n))
     return nodes
 
+def read_order(image_hash):
+    r = ring()
+    nodes = []
+    appending = False
+    seen = dict()
+    while len(r) > 0:
+        # get the first element
+        r.reverse()
+        (k,n) = r.pop()
+        r.reverse()
+        # TODO: is there a faster, more idiomatic way to do this in python than reverse, pop, reverse?
+        if appending or image_hash > k:
+            if n.uuid not in seen:
+                nodes.append(n)
+                seen[n.uuid] = True
+            appending = True
+        else:
+            # put it back on
+            r.append((k,n))
+    return nodes
+
+
 def current_neighbors():
     """ nodes that we think are alive.
     ie, that haven't had a failure from more recently than we've heard from them """
