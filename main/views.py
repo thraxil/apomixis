@@ -154,11 +154,15 @@ def bootstrap(request):
             r = Node.objects.filter(uuid=nuuid)
             if r.count():
                 # we've met this neighbor before. just update.
+                print "old neighbor %s" % n['nickname']
+                print "writeable: %s" % n['writeable']
                 neighbor = r[0]
                 neighbor.last_seen = datetime.now()
+                neighbor.writeable = n['writeable']
                 neighbor.save()
             else:
                 # hello new neighbor!
+                print "new neighbor %s" % n['nickname']
                 neighbor = Node.objects.create(uuid=nuuid,
                                                nickname=n['nickname'],
                                                base_url=n['base_url'],
@@ -166,6 +170,7 @@ def bootstrap(request):
                                                writeable=n['writeable'],
                                                )
         except Exception, e:
+            print str(e)
             pass
     return HttpResponse("done")
 
@@ -198,9 +203,11 @@ def index(request):
             satisfied = False
             copies = 0
             wr = write_order(long(sha1,16))
+            print str(wr)
             nodes_written = []
             for node in wr:
                 if copies >= settings.CLUSTER['replication']:
+                    print "enough copies saved"
                     satisfied = True
                     break
                 else:

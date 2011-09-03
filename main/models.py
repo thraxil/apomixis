@@ -104,6 +104,7 @@ def ring():
 
 def write_ring():
     r = []
+    print "current_writeable_neighbors: %s" % str(current_writeable_neighbors())
     for n in current_writeable_neighbors():
         for k in n.hash_keys():
             r.append((k,n))
@@ -112,6 +113,7 @@ def write_ring():
 
 def write_order(image_hash):
     wr = write_ring()
+    print "write ring: %s" % str(wr)
     nodes = []
     appending = False
     seen = dict()
