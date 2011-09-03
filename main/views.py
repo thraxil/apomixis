@@ -154,20 +154,18 @@ def bootstrap(request):
             r = Node.objects.filter(uuid=nuuid)
             if r.count():
                 # we've met this neighbor before. just update.
-                print "old neighbor %s" % n['nickname']
-                print "writeable: %s" % n['writeable']
                 neighbor = r[0]
                 neighbor.last_seen = datetime.now()
                 neighbor.writeable = n['writeable']
                 neighbor.save()
             else:
                 # hello new neighbor!
-                print "new neighbor %s" % n['nickname']
                 neighbor = Node.objects.create(uuid=nuuid,
                                                nickname=n['nickname'],
                                                base_url=n['base_url'],
                                                location=n['location'],
                                                writeable=n['writeable'],
+                                               last_seen=datetime.now(),
                                                )
         except Exception, e:
             print str(e)
@@ -211,13 +209,11 @@ def index(request):
 
             
             for node in wr:
-                if copies >= settings.CLUSTER['replication']:
-                    print "enough copies saved"
+                if int(copies) >= int(settings.CLUSTER['replication']):
                     satisfied = True
                     break
                 else:
                     if node.uuid == settings.CLUSTER['uuid']:
-                        print "saving to our own node"
                         # we can write directly for our own node
                         tmpfile = tempfile.NamedTemporaryFile(delete=False)
                         for chunk in request.FILES['image'].chunks():
@@ -234,12 +230,12 @@ def index(request):
                         if settings.FILE_UPLOAD_PERMISSIONS is not None:
                             os.chmod(os.path.join(path,"image" + extension), settings.FILE_UPLOAD_PERMISSIONS)
                         copies += 1
-                        nodes_written.append(node.uuid)
+                        nodes_written.append(node.nickname)
                         continue
                     r = node.stash(sha1,extension,request.FILES['image'])
                     if r:
                         copies += 1
-                        nodes_written.append(node.uuid)
+                        nodes_written.append(node.nickname)
                     else:
                         # failure to write!
                         # take it off the writeable list for now
@@ -358,7 +354,6 @@ def image(request,sha,size,basename,ext):
     # TODO: send image dimensions in headers
     # TODO: detect noop resizes and 301 to existing ones
     #       instead of creating duplicate files
-    print "image"
     ext = ext.lower()
     if ext == "jpeg":
         ext = "jpg"
