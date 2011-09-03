@@ -3,6 +3,10 @@ from datetime import datetime, timedelta
 from hashlib import sha1
 from restclient import POST
 import simplejson
+import urllib2
+from poster.encode import multipart_encode
+from poster.streaminghttp import register_openers
+
 from django.conf import settings
 
 class Node(models.Model):
@@ -76,14 +80,17 @@ class Node(models.Model):
             self.save()
 
     def stash(self,ahash,extension,image_file):
+        print "stashing to %s" % self.nickname
         try:
-            r = POST(self.base_url + "stash/",params=dict(hash=ahash,
-                                                          extension=extension),
-                     files={'image' : {'filename' : "image%s" % extension,
-                                       'file' : image_file.file}},
-                     async=False)
+            register_openers()
+            datagen, headers = multipart_encode({"image": image_file,
+                                                 "hash" : ahash,
+                                                 "extension" : extension})
+            request = urllib2.Request(self.base_url + "stash/",datagen, headers)
+            r = urllib2.urlopen(request).read()
             return True
         except Exception, e:
+            print str(e)
             return False
 
         
@@ -104,7 +111,6 @@ def ring():
 
 def write_ring():
     r = []
-    print "current_writeable_neighbors: %s" % str(current_writeable_neighbors())
     for n in current_writeable_neighbors():
         for k in n.hash_keys():
             r.append((k,n))
@@ -113,7 +119,6 @@ def write_ring():
 
 def write_order(image_hash):
     wr = write_ring()
-    print "write ring: %s" % str(wr)
     nodes = []
     appending = False
     seen = dict()

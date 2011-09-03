@@ -191,8 +191,11 @@ def index(request):
                 return HttpResponse("unsupported image format")
 
             sha1 = hashlib.sha1()
+            copy = cStringIO.StringIO()
             for chunk in request.FILES['image'].chunks():
                 sha1.update(chunk)
+                copy.write(chunk)
+            
             sha1 = sha1.hexdigest()
 
             data = dict(hash=sha1,extension=extension,
@@ -203,8 +206,10 @@ def index(request):
             satisfied = False
             copies = 0
             wr = write_order(long(sha1,16))
-            print str(wr)
+            print "write order: %s" % str(wr)
             nodes_written = []
+
+            
             for node in wr:
                 if copies >= settings.CLUSTER['replication']:
                     print "enough copies saved"
@@ -212,6 +217,7 @@ def index(request):
                     break
                 else:
                     if node.uuid == settings.CLUSTER['uuid']:
+                        print "saving to our own node"
                         # we can write directly for our own node
                         tmpfile = tempfile.NamedTemporaryFile(delete=False)
                         for chunk in request.FILES['image'].chunks():
@@ -230,7 +236,7 @@ def index(request):
                         copies += 1
                         nodes_written.append(node.uuid)
                         continue
-                    r = node.stash(sha1,extension,request.FILES['image'].read())
+                    r = node.stash(sha1,extension,request.FILES['image'])
                     if r:
                         copies += 1
                         nodes_written.append(node.uuid)

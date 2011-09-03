@@ -31,6 +31,7 @@ CLUSTER = {
     settings_file.write(contents)
     settings_file.close()
     try:
+        os.system("rm -rf /var/www/apomixis%d/uploads/" % n)
         os.makedirs("/var/www/apomixis%d/uploads/" % n)
     except:
         pass
