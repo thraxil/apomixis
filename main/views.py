@@ -28,6 +28,30 @@ def resize(img,width=None,height=None,square=False):
     if width is None and height is None and not square:
         # no dimensions specified
         return img
+
+    # do a fast resize to within a factor of two of the target size
+    # using the ugly, but efficient NEAREST
+    if width and height:
+        factor = 1
+        while img.size[0]/factor > 2*width and img.size[1]*2/factor > 2*height:
+            factor *=2
+        if factor > 1:
+            img.thumbnail((img.size[0]/factor, img.size[1]/factor), Image.NEAREST)
+    elif width:
+        factor = 1
+        while img.size[0]/factor > 2*width:
+            factor *=2
+        if factor > 1:
+            img.thumbnail((img.size[0]/factor, img.size[1]/factor), Image.NEAREST)
+    elif height:
+        factor = 1
+        while img.size[1]/factor > 2*height:
+            factor *=2
+        if factor > 1:
+            img.thumbnail((img.size[0]/factor, img.size[1]/factor), Image.NEAREST)
+
+
+    # then do the final scaling with pretty, but slow ANTIALIAS
     if square:
         size = width or height or min(list(img.size))
         img = square_resize(img,size)
@@ -90,6 +114,7 @@ def announce(request):
         # TODO: allow POST body as json (look at content-type)
         n = simplejson.loads(n['json'])
 
+    print str(n)
     if 'uuid' in n.keys():
         # neighbor is announcing to us, let's listen to what they have to say
         nuuid = n['uuid']
@@ -106,8 +131,8 @@ def announce(request):
                                            base_url=n['base_url'],
                                            location=n['location'],
                                            writeable=n['writeable'],
+                                           last_seen=datetime.now(),
                                            )
-
     # be polite and respond with data about myself
     protocol = request.is_secure() and "https" or "http"
     data = {
@@ -129,6 +154,7 @@ def status(request):
 
     protocol = request.is_secure() and "https" or "http"
     data = {
+        'verbose' : request.GET.get('verbose',''),
         'nickname' : settings.CLUSTER['nickname'], 
         'uuid' : settings.CLUSTER['uuid'], 
         'location' : settings.CLUSTER['location'],

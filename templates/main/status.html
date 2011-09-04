@@ -10,14 +10,48 @@
 <tr><th>location</th><td>{{location}}</td></tr>
 <tr><th>writeable</th><td>{{writeable}}</td></tr>
 <tr><th>base url</th><td>{{base_url}}</td></tr>
+{% if verbose %}
 <tr><th>hash keys</th><td>
 {% for k in hash_keys %}{{k}} {% endfor %}
 </td>
+{% endif %}
 </table>
 </table>
 
 <h2>Other nodes</h2>
 
+<table>
+<tr>
+<th>nickname</th>
+<th>uuid</th>
+<th>writeable</th>
+<th>last seen</th>
+<th>last failed</th>
+</tr>
+{% for node in nodes %}
+<tr>
+<th>{{node.nickname}}</th>
+<td>{{node.uuid}}</td>
+<td
+{% if node.writeable %}
+style="background-color: #66ff66"
+{% else %}
+style="background-color: red"
+{% endif %}
+>{{node.writeable}}</td>
+<td>{{node.last_seen}}</td>
+<td
+{% if node.is_current %}
+style="background-color: #66ff66"
+{% else %}
+style="background-color: red"
+{% endif %}
+>{{node.last_failed}}</td>
+</tr>
+{% endfor %}
+</table>
+
+{% if verbose %}
 {% for node in nodes %}
 <table>
 <tr><th>nickname</th><td>{{node.nickname}}</td></tr>
@@ -39,7 +73,7 @@ style="background-color: red"
 </table>
 
 {% endfor %}
-
+{% endif %}
 <h3>ring</h3>
 
 {% for r in ring %}
