@@ -59,3 +59,13 @@ CLUSTER = {
     p = Process(target=f, args=(n,)).start()
     p2 = Process(target=c, args=(n,)).start()
 
+"""
+a note on rabbitmq setup:
+
+to run this cluster, rabbitmq needs vhosts node0 - node9 created and permissioned properly:
+
+$ sudo rabbitmqctl add_vhost /node0
+$ sudo rabbitmqctl set_permissions -p /node0 guest ".*" ".*" ".*"
+
+for each
+""""
