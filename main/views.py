@@ -14,6 +14,7 @@ import simplejson
 from models import Node, current_neighbors, normalize_url, hash_keys, ring, write_ring, write_order, read_order
 from datetime import datetime
 from restclient import POST,GET
+import tasks
 
 def square_resize(img,size):
     sizes = list(img.size)
@@ -114,7 +115,6 @@ def announce(request):
         # TODO: allow POST body as json (look at content-type)
         n = simplejson.loads(n['json'])
 
-    print str(n)
     if 'uuid' in n.keys():
         # neighbor is announcing to us, let's listen to what they have to say
         nuuid = n['uuid']
@@ -172,30 +172,7 @@ def bootstrap(request):
     myinfo = settings.CLUSTER
     protocol = request.is_secure() and "https" or "http"
     myinfo['base_url'] = normalize_url("%s://%s/" % (protocol,request.get_host()))
-    for url in settings.CLUSTER['nodes']:
-        try:
-            r = POST(url + "announce/",params=myinfo,async=False)
-            n = simplejson.loads(r)
-            nuuid = n['uuid']
-            r = Node.objects.filter(uuid=nuuid)
-            if r.count():
-                # we've met this neighbor before. just update.
-                neighbor = r[0]
-                neighbor.last_seen = datetime.now()
-                neighbor.writeable = n['writeable']
-                neighbor.save()
-            else:
-                # hello new neighbor!
-                neighbor = Node.objects.create(uuid=nuuid,
-                                               nickname=n['nickname'],
-                                               base_url=n['base_url'],
-                                               location=n['location'],
-                                               writeable=n['writeable'],
-                                               last_seen=datetime.now(),
-                                               )
-        except Exception, e:
-            print str(e)
-            pass
+    tasks.bootstrap.delay(myinfo)
     return HttpResponse("done")
 
 @rendered_with("main/index.html")

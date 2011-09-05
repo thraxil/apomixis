@@ -14,7 +14,7 @@ from settings_shared import *
 
 DATABASE_NAME = '/var/www/apomixis/apomixis%d.sqlite' 
 MEDIA_ROOT = "/var/www/apomixis%d/uploads/"
-
+BROKER_VHOST = "/node%d"
 CLUSTER = {
     'name' : 'testcluster', # name of the cluster
     'uuid' : '%s', # my UUID (randomly generated)
@@ -27,7 +27,8 @@ CLUSTER = {
     'writeable' : True, # i can handle uploads
     'announce_frequency' : 300, # how often to re-announce self to the cluster (seconds)
     }
-""" % (n,n,u,n)
+
+""" % (n,n,n,u,n)
     settings_file.write(contents)
     settings_file.close()
     try:
@@ -52,7 +53,7 @@ CLUSTER = {
         sts = os.waitpid(p.pid, 0)[1]
 
     def c(s):
-        p = subprocess.Popen("./manage.py celeryd -Q node%d --settings=settings_%d" % (s,s), shell=True)
+        p = subprocess.Popen("./manage.py celeryd --settings=settings_%d" % (s,), shell=True)
         sts = os.waitpid(p.pid, 0)[1]
 
     p = Process(target=f, args=(n,)).start()
