@@ -26,9 +26,10 @@ CLUSTER = {
     'location_replication' : 1, # how many locations it will try to spread those copies over
     'writeable' : True, # i can handle uploads
     'announce_frequency' : 300, # how often to re-announce self to the cluster (seconds)
+    'base_url' : "http://localhost:80%02d/",
     }
 
-""" % (n,n,n,u,n)
+""" % (n,n,n,u,n,n)
     settings_file.write(contents)
     settings_file.close()
     try:
@@ -56,8 +57,13 @@ CLUSTER = {
         p = subprocess.Popen("./manage.py celeryd --settings=settings_%d" % (s,), shell=True)
         sts = os.waitpid(p.pid, 0)[1]
 
+    def cb(s):
+        p = subprocess.Popen("./manage.py celerybeat -S djcelery.schedulers.DatabaseScheduler --settings=settings_%d" % (s,), shell=True)
+        sts = os.waitpid(p.pid, 0)[1]
+
     p = Process(target=f, args=(n,)).start()
     p2 = Process(target=c, args=(n,)).start()
+    p3 = Process(target=cb, args=(n,)).start()
 
 """
 a note on rabbitmq setup:
@@ -68,4 +74,4 @@ $ sudo rabbitmqctl add_vhost /node0
 $ sudo rabbitmqctl set_permissions -p /node0 guest ".*" ".*" ".*"
 
 for each
-""""
+"""

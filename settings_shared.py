@@ -76,4 +76,9 @@ CLUSTER = {
     'location_replication' : 1, # how many locations it will try to spread those copies over
     'writeable' : True, # i can handle uploads
     'announce_frequency' : 300, # how often to re-announce self to the cluster (seconds)
+    'base_url' : "http://localhost:8000/",
     }
+
+
+
+
