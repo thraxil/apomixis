@@ -149,7 +149,8 @@ def announce(request):
                                                      writeable=nnode['writeable'],
                                                      )
                     except Exception, e:
-                        print str(e)
+                        if settings.DEBUG: print str(e)
+
 
     # be polite and respond with data about myself
     protocol = request.is_secure() and "https" or "http"
@@ -397,11 +398,9 @@ def image(request,sha,size,basename,ext):
                     mimes = dict(jpg="image/jpeg",gif="image/gif",png="image/png")
                     return HttpResponse(data,mimes[ext])
             except Exception, e:
-                print str(e)
+                if settings.DEBUG: print str(e)
         # we don't have it and none of the nodes in the ring have it...
         raise Http404
-    else:
-        print "on this node"
     if os.path.exists(os.path.join(dirpath,filename)):
         # if that file exists already, we can just serve it
         return serve_file(os.path.join(dirpath,filename),ext)
