@@ -51,5 +51,10 @@ CLUSTER = {
         p = subprocess.Popen("./manage.py runserver --settings=settings_%d localhost:80%02d" % (s,s), shell=True)
         sts = os.waitpid(p.pid, 0)[1]
 
+    def c(s):
+        p = subprocess.Popen("./manage.py celeryd -Q node%d --settings=settings_%d" % (s,s), shell=True)
+        sts = os.waitpid(p.pid, 0)[1]
+
     p = Process(target=f, args=(n,)).start()
+    p2 = Process(target=c, args=(n,)).start()
 

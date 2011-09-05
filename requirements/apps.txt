@@ -1,3 +1,4 @@
 -r libs.txt
 requirements/src/django-staticmedia-0.2.tar.gz
-
+requirements/src/django-picklefield-0.1.9.tar.gz
+requirements/src/django-celery-2.2.1.tar.gz

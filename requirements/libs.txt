@@ -9,3 +9,10 @@ requirements/src/restclient-0.9.9.tar.gz
 requirements/src/uuid-1.30.tar.gz
 requirements/src/Imaging-1.1.7.tar.gz
 requirements/src/poster-0.7.0.tar.gz
+requirements/src/python-dateutil-1.5.tar.gz
+requirements/src/anyjson-0.3.1.tar.gz
+requirements/src/pyparsing-1.5.6.tar.gz
+requirements/src/amqplib-1.0.0.tgz
+requirements/src/kombu-1.2.1.tar.gz
+requirements/src/celery-2.2.1.tar.gz
+

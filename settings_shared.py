@@ -41,8 +41,13 @@ TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(__file__),"templates"),
 )
 
+import djcelery
+djcelery.setup_loader()
+
+
 INSTALLED_APPS = (
     'main',
+    'djcelery',
 )
 
 FILE_UPLOAD_PERMISSIONS = 0644
@@ -50,7 +55,13 @@ EMAIL_SUBJECT_PREFIX = "[apomixis] "
 EMAIL_HOST = 'localhost'
 SERVER_EMAIL = "apomixis@ccnmtl.columbia.edu"
 
-
+#CELERY_RESULT_BACKEND = "database"
+BROKER_HOST = "localhost"
+BROKER_PORT = 5672
+#BROKER_USER = "guest"
+#BROKER_PASSWORD = "guest"
+BROKER_VHOST = "/"
+CELERYD_CONCURRENCY = 4
 
 UPLOAD_KEYS = None
 
