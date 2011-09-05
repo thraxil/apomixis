@@ -25,7 +25,7 @@ CLUSTER = {
     'replication' : 3, # how many copies of each image it will try to maintain
     'location_replication' : 1, # how many locations it will try to spread those copies over
     'writeable' : True, # i can handle uploads
-    'announce_frequency' : 300, # how often to re-announce self to the cluster (seconds)
+    'announce_frequency' : 100, # how often to re-announce self to the cluster (seconds)
     'base_url' : "http://localhost:80%02d/",
     }
 

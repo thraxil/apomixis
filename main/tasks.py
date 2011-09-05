@@ -1,6 +1,6 @@
 from celery.task import task
 from celery.task import Task, PeriodicTask
-from models import Node
+from models import Node, current_neighbors
 from django.conf import settings
 from restclient import POST
 import simplejson
@@ -47,8 +47,18 @@ def ping_node(node_id):
         node.last_seen = datetime.now()
         node.save()
         return
+    # if we've heard from them more recently than the announce_frequency,
+    # no reason to re-ping
+    f = timedelta(seconds=int(settings.CLUSTER["announce_frequency"]))
+    if node.last_seen is not None:
+        now = datetime.now()
+        delt = now - node.last_seen
+        if delt < f:
+            print "skipping %s" % delt
+            return
     try:
-        r = POST(node.base_url + "announce/",params=myinfo,async=False)
+        myinfo['nodes'] = [n.as_dict() for n in current_neighbors()]
+        r = POST(node.base_url + "announce/",params=dict(json=simplejson.dumps(myinfo)),async=False)
         n = simplejson.loads(r)
         if n['uuid'] == node.uuid:
             node.last_seen = datetime.now()

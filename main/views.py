@@ -133,6 +133,24 @@ def announce(request):
                                            writeable=n['writeable'],
                                            last_seen=datetime.now(),
                                            )
+
+        # does it know any nodes that we don't?
+        if 'nodes' in n.keys():
+            if type(n['nodes']) == type([]):
+                for nnode in n['nodes']:
+                    try:
+                        r = Node.objects.filter(uuid=nnode['uuid'])
+                        if r.count() == 0:
+                            # they know someone we don't
+                            nn = Node.objects.create(uuid=nnode['uuid'],
+                                                     nickname=nnode['nickname'],
+                                                     base_url=nnode['base_url'],
+                                                     location=nnode['location'],
+                                                     writeable=nnode['writeable'],
+                                                     )
+                    except Exception, e:
+                        print str(e)
+
     # be polite and respond with data about myself
     protocol = request.is_secure() and "https" or "http"
     data = {
@@ -207,7 +225,6 @@ def index(request):
             satisfied = False
             copies = 0
             wr = write_order(long(sha1,16))
-            print "write order: %s" % str(wr)
             nodes_written = []
 
             
@@ -368,17 +385,14 @@ def image(request,sha,size,basename,ext):
         size = normalize_size_format(size)
         filename = "%s.%s" % (size,ext)
     if not os.path.exists(dirpath):
-        print "not on this node"
         # we don't have it on this node, let's check the ring
         r = read_order(long(sha,16))
         for node in r:
-            print "checking with node %s" % node.uuid
             if node.uuid == settings.CLUSTER['uuid']:
                 # we already know that we don't have it
                 continue
             try:
                 resp,data = GET(node.base_url + "retrieve/%s/%s/%s/" % (sha,size,ext),resp=True)
-                print resp['status']
                 if resp['status'] == '200':
                     mimes = dict(jpg="image/jpeg",gif="image/gif",png="image/png")
                     return HttpResponse(data,mimes[ext])
@@ -389,9 +403,6 @@ def image(request,sha,size,basename,ext):
     else:
         print "on this node"
     if os.path.exists(os.path.join(dirpath,filename)):
-        print "found it"
-        print dirpath
-        print filename
         # if that file exists already, we can just serve it
         return serve_file(os.path.join(dirpath,filename),ext)
     else:
