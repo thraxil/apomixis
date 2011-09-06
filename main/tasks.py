@@ -54,7 +54,6 @@ def ping_node(node_id):
         now = datetime.now()
         delt = now - node.last_seen
         if delt < f:
-            print "skipping %s" % delt
             return
     try:
         myinfo['nodes'] = [n.as_dict() for n in current_neighbors()]

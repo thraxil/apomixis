@@ -6,7 +6,7 @@ import simplejson
 import urllib2
 from poster.encode import multipart_encode
 from poster.streaminghttp import register_openers
-
+from collections import deque
 from django.conf import settings
 
 class Node(models.Model):
@@ -79,16 +79,13 @@ def write_ring():
     return r
 
 def write_order(image_hash):
-    wr = write_ring()
+    wr = deque(write_ring())
     nodes = []
     appending = False
     seen = dict()
     while len(wr) > 0:
         # get the first element
-        wr.reverse()
-        (k,n) = wr.pop()
-        wr.reverse()
-        # TODO: is there a faster, more idiomatic way to do this in python than reverse, pop, reverse?
+        (k,n) = wr.popleft()
         if appending or image_hash > k:
             if n.uuid not in seen:
                 nodes.append(n)
@@ -100,16 +97,13 @@ def write_order(image_hash):
     return nodes
 
 def read_order(image_hash):
-    r = ring()
+    r = deque(ring())
     nodes = []
     appending = False
     seen = dict()
     while len(r) > 0:
         # get the first element
-        r.reverse()
-        (k,n) = r.pop()
-        r.reverse()
-        # TODO: is there a faster, more idiomatic way to do this in python than reverse, pop, reverse?
+        (k,n) = r.popleft()
         if appending or image_hash > k:
             if n.uuid not in seen:
                 nodes.append(n)
