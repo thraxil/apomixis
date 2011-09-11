@@ -18,9 +18,18 @@ ret = subprocess.call(["python", "virtualenv.py",
                        vedir])
 if ret: exit(ret)
 
+if sys.version.startswith('2.6'):
+    # pain in the ass, required by celery/amqplib
+    # have to do seperately or it breaks in 2.7
+    ret = subprocess.call([os.path.join(vedir, 'bin', 'pip'), "install",
+                           "-E", vedir,
+                           "--index-url=''",
+                           os.path.join(pwd,"requirements/src/importlib-1.0.1.tar.gz")])
+    if ret: exit(ret)
+
+
 ret = subprocess.call([os.path.join(vedir, 'bin', 'pip'), "install",
                        "-E", vedir,
-                       "--enable-site-packages",
                        "--index-url=''",
                        "--requirement",os.path.join(pwd,"requirements/apps.txt")])
 if ret: exit(ret)
