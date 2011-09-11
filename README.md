@@ -99,7 +99,13 @@ The advantages of this approach:
   enough replication, you might not need extra backup solutions.
 * The cluster supports easy dynamic adding and dropping of nodes. (The
   approach is inspired by Riak and Amazon's Dynamo model).
-
+* The cluster scales out linearly.
+* A cluster of apomixis nodes can handle more images than would fit on
+  a single disk.
+* Since the interface is all HTTP, you can use it with any web
+  application/framework written in any language. If you change your
+  application or rewrite, you don't have to also change/rewrite your
+  image scaling/serving.
 
 Implementation Details
 ----------------------
@@ -154,4 +160,17 @@ Future Roadmap
   where nodes run and you want to make sure that uploaded images
   always get stored to each datacenter in addition to the basic
   replication level. This provides basic disaster recovery support.
+* The approach to scaling images that apomixis uses is very efficient
+  while retaining high quality, but still has the problem of needing
+  to load large images into memory. This bloats the apache/django
+  process and requires careful tweaking of the apache settings to keep
+  things fast. Should look into using imagemagick in an external
+  process to deal with very large images (or spawning an external
+  process with PIL).
+* should apomixis also handle tiling large images? 
+* grayscale conversion? rounded corners? how complex image adjustment
+  should be included? should there be a plugin API so people can write
+  custom tweaks?
+* format conversion? eg, let users upload a .tif and serve it as a
+  .jpg?
 
