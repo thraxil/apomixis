@@ -133,6 +133,11 @@ Configuration
 TODO. look at the CLUSTER part of settings_shared to start. It's
 fairly self-explanatory.
 
+Also check out the `scripts/runcluster.py`, which is a test script
+that creates, initializes, and runs ten apomixis nodes (just one the
+same machine). That might be a good example of how a whole cluster
+gets configured.
+
 Known Issues
 ------------
 
