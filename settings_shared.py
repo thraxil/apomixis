@@ -48,6 +48,7 @@ djcelery.setup_loader()
 INSTALLED_APPS = (
     'main',
     'djcelery',
+    'django.contrib.markup',
 )
 
 FILE_UPLOAD_PERMISSIONS = 0644
