@@ -117,6 +117,10 @@ they are aware of to keep the entire cluster updated about all nodes'
 status. Much of this happens in background jobs managed with Celery
 (and probably RabbitMQ).
 
+Apomixis is a Django app, but uses X-sendfile to allow Apache (or
+lighttpd/nginx) to handle the actual serving of files for efficiency.
+
+
 Configuration
 -------------
 
