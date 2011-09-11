@@ -41,7 +41,6 @@ class Node(models.Model):
         return hash_keys(self.uuid,n)
 
     def stash(self,ahash,extension,image_file):
-        print "stashing to %s" % self.nickname
         try:
             register_openers()
             datagen, headers = multipart_encode({"image": image_file,
@@ -51,7 +50,6 @@ class Node(models.Model):
             r = urllib2.urlopen(request).read()
             return True
         except Exception, e:
-            print str(e)
             return False
 
         
