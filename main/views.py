@@ -161,7 +161,7 @@ def announce(request):
         'nodes' : [n.as_dict() for n in current_neighbors()], 
         # TODO: determine based on storage caps
         'writeable' : settings.CLUSTER['writeable'], 
-        'base_url' : normalize_url("%s://%s/" % (protocol,request.get_host())),
+        'base_url' : settings.CLUSTER['base_url'],
         }
     return HttpResponse(simplejson.dumps(data),mimetype="application/json")
 
@@ -180,7 +180,7 @@ def status(request):
         'nodes' : Node.objects.all(),
         # TODO: determine based on storage caps
         'writeable' : settings.CLUSTER['writeable'], 
-        'base_url' : normalize_url("%s://%s/" % (protocol,request.get_host())),
+        'base_url' : settings.CLUSTER['base_url'],
         'hash_keys' : hash_keys(settings.CLUSTER['uuid']),
         'ring' : ring(),
         }
@@ -190,7 +190,7 @@ def bootstrap(request):
     """ announce ourselves to all the nodes in the cluster config to get things started """
     myinfo = settings.CLUSTER
     protocol = request.is_secure() and "https" or "http"
-    myinfo['base_url'] = normalize_url("%s://%s/" % (protocol,request.get_host()))
+    myinfo['base_url'] = settings.CLUSTER['base_url']
     tasks.bootstrap.delay(myinfo)
     return HttpResponse("done")
 
