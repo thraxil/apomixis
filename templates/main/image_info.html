@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style type="text/css">
+.True {
+background-color: #0f0;
+}
+</style>
+
+Image: <b>{{sha}}</b><br />
+Local: {{local}}<br />
+
+<ul>
+{% for n in other_nodes %}
+<li class="{{n.response.local}}"><b>{{n.node.nickname}}</b> {{n.response.local}}</li>
+{% endfor %}
+</ul>
+
+{% endblock %}

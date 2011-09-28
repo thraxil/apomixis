@@ -341,6 +341,20 @@ def retrieve(request,sha,size,ext="jpg"):
 
     return serve_file(os.path.join(dirpath,filename),ext)
 
+def retrieve_info(request,sha,size,ext="jpg"):
+    full_filename = "image.%s" % ext
+    if size == "full":
+        filename = full_filename
+    else:
+        size = normalize_size_format(size)
+        filename = "%s.%s" % (size,ext)
+    dirpath = full_path_from_hash(sha)
+    data = dict(sha=sha,size=size,local=True)
+    if not os.path.exists(dirpath):
+        data['local'] = False
+
+    # TODO: also check for sizes
+    return HttpResponse(simplejson.dumps(data),mimetype="application/json")
 
 def normalize_size_format(size):
     """ always go width first. ie, 100h100w gets converted to 100w100h """
@@ -368,6 +382,44 @@ def serve_file(filename,ext):
         data = open(filename).read()
         mimes = dict(jpg="image/jpeg",gif="image/gif",png="image/png")
         return HttpResponse(data,mimes[ext])
+
+@rendered_with("main/image_info.html")
+def image_info(request,sha,size,basename,ext):
+    ext = ext.lower()
+    if ext == "jpeg":
+        ext = "jpg"
+    dirpath = full_path_from_hash(sha)
+    full_filename = "image.%s" % ext
+    if size == "full":
+        filename = full_filename
+    else:
+        size = normalize_size_format(size)
+        filename = "%s.%s" % (size,ext)
+
+    data = dict(sha=sha,size=size,basename=basename,ext=ext)
+    data['local'] = True
+    other_nodes = []
+    if not os.path.exists(dirpath):
+        data['local'] = False
+
+    r = read_order(long(sha,16))
+    data['ring'] = r
+    for node in r:
+        node_response = dict(node=node)
+        if node.uuid == settings.CLUSTER['uuid']:
+            # we already know that we don't have it
+            continue
+        try:
+            resp,ndata = GET(node.base_url + "retrieve_info/%s/%s/%s/" % (sha,size,ext),resp=True)
+            if resp['status'] == '200':
+                node_response['response'] = simplejson.loads(ndata)
+            node_response["status"] = resp['status']
+        except Exception, e:
+            if settings.DEBUG: print str(e)
+        other_nodes.append(node_response)
+    data['other_nodes'] = other_nodes
+    return data
+
 
 def image(request,sha,size,basename,ext):
     # TODO: handle etags
