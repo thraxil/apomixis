@@ -101,3 +101,15 @@ class GossipTask(PeriodicTask):
             ping_node.delay(n.id)
         return True
 
+
+class BootstrapTask(PeriodicTask):
+    """ once an hour, re-run bootstrap"""
+    run_every = timedelta(seconds=60 * 60)
+
+    def run(self,**kwargs):
+        print "BootStrapTask"
+        myinfo = settings.CLUSTER
+        myinfo['base_url'] = settings.CLUSTER['base_url']
+        bootstrap.delay(myinfo)
+        return True
+
