@@ -23,6 +23,7 @@
 <table>
 <tr>
 <th>nickname</th>
+<th>base_url</th>
 <th>uuid</th>
 <th>writeable</th>
 <th>last seen</th>
@@ -31,6 +32,7 @@
 {% for node in nodes %}
 <tr>
 <th>{{node.nickname}}</th>
+<td>{{node.base_url}}</td>
 <td>{{node.uuid}}</td>
 <td
 {% if node.writeable %}
