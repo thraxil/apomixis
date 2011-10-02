@@ -29,6 +29,7 @@
 <th>last seen</th>
 <th>last failed</th>
 <th></th>
+<th></th>
 </tr>
 {% for node in nodes %}
 <tr>
@@ -54,6 +55,12 @@ style="background-color: red"
 <form action="/forget/{{node.id}}/"
       method="post"><input type="submit" value="forget" /></form>
 </td>
+
+<td>
+<form action="/ping/{{node.id}}/"
+      method="post"><input type="submit" value="ping" /></form>
+</td>
+
 </tr>
 {% endfor %}
 </table>

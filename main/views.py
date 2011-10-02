@@ -192,6 +192,12 @@ def forget_node(request,node_id):
     node.delete()
     return HttpResponseRedirect("/status/")
 
+def ping_node(request,node_id):
+    node = get_object_or_404(Node,id=node_id)
+    tasks.ping_node.delay(node.id)
+    return HttpResponseRedirect("/status/")
+
+
 def bootstrap(request):
     """ announce ourselves to all the nodes in the cluster config to get things started """
     myinfo = settings.CLUSTER
