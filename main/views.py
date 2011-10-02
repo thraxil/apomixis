@@ -192,7 +192,7 @@ def bootstrap(request):
     protocol = request.is_secure() and "https" or "http"
     myinfo['base_url'] = settings.CLUSTER['base_url']
     tasks.bootstrap.delay(myinfo)
-    return HttpResponse("done")
+    return HttpResponseRedirect("/status/")
 
 @rendered_with("main/index.html")
 def index(request):
