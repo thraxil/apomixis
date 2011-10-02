@@ -43,7 +43,7 @@ style="background-color: #66ff66"
 style="background-color: red"
 {% endif %}
 >{{node.writeable}}</td>
-<td>{{node.last_seen}}</td>
+<td>{{node.last_seen|date:"Y-m-d H:i:s"}}</td>
 <td
 {% if node.is_current %}
 style="background-color: #66ff66"
