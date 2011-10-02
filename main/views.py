@@ -192,6 +192,12 @@ def forget_node(request,node_id):
     node.delete()
     return HttpResponseRedirect("/status/")
 
+def add_node(request):
+    base_url = request.POST.get('base_url','')
+    myinfo = settings.CLUSTER
+    tasks.ping_url.delay(myinfo,base_url)
+    return HttpResponseRedirect("/status/")
+
 def ping_node(request,node_id):
     node = get_object_or_404(Node,id=node_id)
     tasks.ping_node.delay(node.id)

@@ -65,6 +65,11 @@ style="background-color: red"
 {% endfor %}
 </table>
 
+<form action="/add_node/">
+base_url: <input type="text" name="base_url" />
+<input type="submit" value="add node" />
+</form>
+
 {% if verbose %}
 {% for node in nodes %}
 <table>
