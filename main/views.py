@@ -15,6 +15,7 @@ from models import Node, current_neighbors, normalize_url, hash_keys, ring, writ
 from datetime import datetime
 from restclient import POST,GET
 import tasks
+from django.shortcuts import get_object_or_404
 
 def square_resize(img,size):
     sizes = list(img.size)
@@ -185,6 +186,11 @@ def status(request):
         'ring' : ring(),
         }
     return data
+
+def forget_node(request,node_id):
+    node = get_object_or_404(Node,id=node_id)
+    node.delete()
+    return HttpResponseRedirect("/status/")
 
 def bootstrap(request):
     """ announce ourselves to all the nodes in the cluster config to get things started """

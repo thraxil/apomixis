@@ -28,6 +28,7 @@
 <th>writeable</th>
 <th>last seen</th>
 <th>last failed</th>
+<th></th>
 </tr>
 {% for node in nodes %}
 <tr>
@@ -49,6 +50,10 @@ style="background-color: #66ff66"
 style="background-color: red"
 {% endif %}
 >{{node.last_failed}}</td>
+<td>
+<form action="/forget/{{node.id}}/"
+      method="post"><input type="submit" value="forget" /></form>
+</td>
 </tr>
 {% endfor %}
 </table>
