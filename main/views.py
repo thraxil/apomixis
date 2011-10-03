@@ -194,22 +194,18 @@ def forget_node(request,node_id):
 
 def add_node(request):
     base_url = request.POST.get('base_url','')
-    myinfo = settings.CLUSTER
-    tasks.ping_url.delay(myinfo,base_url)
+    tasks.ping_url.delay(base_url)
     return HttpResponseRedirect("/status/")
 
 def ping_node(request,node_id):
     node = get_object_or_404(Node,id=node_id)
-    tasks.ping_node.delay(node.id)
+    node.ping()
     return HttpResponseRedirect("/status/")
 
 
 def bootstrap(request):
     """ announce ourselves to all the nodes in the cluster config to get things started """
-    myinfo = settings.CLUSTER
-    protocol = request.is_secure() and "https" or "http"
-    myinfo['base_url'] = settings.CLUSTER['base_url']
-    tasks.bootstrap.delay(myinfo)
+    tasks.bootstrap.delay()
     return HttpResponseRedirect("/status/")
 
 @rendered_with("main/index.html")

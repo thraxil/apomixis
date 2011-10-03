@@ -22,6 +22,7 @@
 
 <table>
 <tr>
+<th></th>
 <th>nickname</th>
 <th>base_url</th>
 <th>uuid</th>
@@ -29,12 +30,16 @@
 <th>last seen</th>
 <th>last failed</th>
 <th></th>
-<th></th>
 </tr>
 {% for node in nodes %}
-<tr>
+<tr class="{% cycle 'even' 'odd' %}">
+<td>
+<form action="/ping/{{node.id}}/"
+      method="post"><input type="submit" value="ping" /></form>
+</td>
+
 <th>{{node.nickname}}</th>
-<td>{{node.base_url}}</td>
+<td><a href="{{node.base_url}}status/">{{node.base_url}}</a></td>
 <td>{{node.uuid}}</td>
 <td
 {% if node.writeable %}
@@ -56,10 +61,6 @@ style="background-color: red"
       method="post"><input type="submit" value="forget" /></form>
 </td>
 
-<td>
-<form action="/ping/{{node.id}}/"
-      method="post"><input type="submit" value="ping" /></form>
-</td>
 
 </tr>
 {% endfor %}

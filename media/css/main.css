@@ -832,3 +832,6 @@ body.fluid #content
 	border: 0;
 }
 
+tr.even td, tr.even th {
+background-color: #efefff;
+}

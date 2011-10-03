@@ -52,7 +52,104 @@ class Node(models.Model):
         except Exception, e:
             return False
 
-        
+    def fail(self):
+        self.last_failed = datetime.now()
+        self.writeable = False
+        self.save()
+
+    def update_from_dict(self,n):
+        self.last_seen = datetime.now()
+        self.nickname = n['nickname']
+        self.base_url = n['base_url']
+        self.location = n['location']
+        self.writeable = n['writeable']
+        self.save()
+
+    def ping(self):
+        """ ping this node. """
+        myinfo = settings.CLUSTER
+        if myinfo['uuid'] == self.uuid:
+            # don't try to ping myself
+            return
+        try:
+            myinfo['nodes'] = [n.as_dict() for n in current_neighbors()]
+            r = POST(self.base_url + "announce/",params=dict(json=simplejson.dumps(myinfo)),async=False)
+            n = simplejson.loads(r)
+            if n['uuid'] == self.uuid:
+                self.update_from_dict(n)
+            else:
+                # hello new neighbor!
+                neighbor = Node.objects.create(uuid=n['uuid'],
+                                               nickname=n['nickname'],
+                                               base_url=n['base_url'],
+                                               location=n['location'],
+                                               writeable=n['writeable'],
+                                               )
+                # schedule for pinging
+                tasks.ping_node.delay(neighbor.id)
+            # does it know any nodes that we don't?
+            check_for_new_neighbors(n['nodes'])
+        except Exception, e:
+            self.fail()
+
+def ping_url(url):
+    try:
+        myinfo = settings.CLUSTER
+        r = POST(url + "announce/",params=myinfo,async=False)
+        n = simplejson.loads(r)
+        nuuid = n['uuid']
+        r = Node.objects.filter(uuid=nuuid)
+        if r.count():
+            # we've met this neighbor before. just update.
+            neighbor = r[0]
+            neighbor.last_seen = datetime.now()
+            neighbor.writeable = n['writeable']
+            neighbor.save()
+        else:
+            # hello new neighbor!
+            neighbor = Node.objects.create(uuid=nuuid,
+                                           nickname=n['nickname'],
+                                           base_url=n['base_url'],
+                                           location=n['location'],
+                                           writeable=n['writeable'],
+                                           last_seen=datetime.now(),
+                                           )
+    except Exception, e:
+        pass
+
+
+def check_for_new_neighbors(nodes):
+    """ given a list of nodes (dicts), see if any are new ones
+    and add them """
+    for nnode in nodes:
+        r = Node.objects.filter(uuid=nnode['uuid'])
+        if r.count() == 0:
+            # they know someone we don't
+            nn = Node.objects.create(uuid=nnode['uuid'],
+                                     nickname=nnode['nickname'],
+                                     base_url=nnode['base_url'],
+                                     location=nnode['location'],
+                                     writeable=nnode['writeable'],
+                                     )
+
+
+def get_self_node():
+    uuid = settings.CLUSTER['uuid']
+    r = Node.objects.get(uuid=uuid)
+    if r.count() == 1:
+        return r[0]
+    if r.count() == 0:
+        # create a self node
+        myinfo = settings.CLUSTER
+        return Node.objects.create(
+            nickname = myinfo['nickname'],
+            uuid = myinfo['uuid'],
+            base_url = myinfo['base_url'],
+            writeable = myinfo['writeable'],
+            location = myinfo['location'],
+            )
+    # TODO: raise an exception here instead
+    print "more than one node with my UUID. this should never happen"
 
 def hash_keys(uuid,n=128):
     keys = []
