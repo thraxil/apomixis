@@ -16,4 +16,6 @@ requirements/src/amqplib-1.0.0.tgz
 requirements/src/kombu-1.2.1.tar.gz
 requirements/src/celery-2.2.1.tar.gz
 requirements/src/Markdown-2.0.3.tar.gz
+requirements/src/pycrypto-2.4.tar.gz
+requirements/src/paramiko-1.7.7.1.zip
 requirements/src/Fabric-1.2.2.tar.gz
